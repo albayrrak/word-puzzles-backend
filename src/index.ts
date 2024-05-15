@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { PrismaClient } from '@prisma/client'
 import { shuffle } from "./helpers/global";
+import { CustomResponse } from "models/responseModel";
+import { GameResponseModel } from "models/global";
 
 const prisma = new PrismaClient()
 
@@ -58,7 +60,7 @@ const words = [
 ]
 
 
-app.post('/start', async (req, res) => {
+app.post('/start', async (req, res: CustomResponse<{ gameId: string }>) => {
     try {
         const { username } = req.body
 
@@ -86,28 +88,25 @@ app.post('/start', async (req, res) => {
 
             })
 
-            return res.json(startGame)
+            return res.json({ data: { game: { gameId: startGame.id } }, success: true }).status(200)
 
         }
 
     } catch (error) {
         console.error('Error creating game:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500);
     }
 });
 
-app.post("/verify", async (req, res) => {
-    const { word, gameId } = req.body
-
-
-    if (gameId) {
+app.post("/verify", async (req, res: CustomResponse<null>) => {
+    try {
+        const { word, gameId } = req.body
 
         const isVerifyWord = await prisma.game.findFirst({ where: { id: gameId, word: word } })
 
-        if (isVerifyWord.level === 7) {
+        if (isVerifyWord && isVerifyWord.level === 7) {
             await prisma.game.update({ where: { id: gameId }, data: { status: false } })
-            return res.json({ msg: "Oyun bitti" }).status(200)
-
+            return res.json({ data: { gameStatus: false }, success: true }).status(200)
         }
 
         if (isVerifyWord && isVerifyWord.status) {
@@ -123,29 +122,54 @@ app.post("/verify", async (req, res) => {
 
             const level = isVerifyWord.level + 1
 
+            await prisma.game.update({ where: { id: gameId }, data: { word: randomRecord.word, wordShuffle: shuffleWord, score: score, level: level } })
 
-
-            const findGame = await prisma.game.update({ where: { id: gameId }, data: { word: randomRecord.word, wordShuffle: shuffleWord, score: score, level: level } })
-
-            return res.json(findGame)
-
+            res.json({ data: { wordStatus: true, gameStatus: true }, success: true }).status(200)
 
         } else {
-            res.status(404).json({ success: false, message: 'Eşleşme bulunamadı.' });
+
+            res.json({ data: { wordStatus: false, gameStatus: true }, success: true }).status(404)
         }
 
+
+
+
+
+    } catch (error) {
+        res.status(500)
     }
 })
 
-app.get("/game/:id", async (req, res) => {
+app.post("/game", async (req, res: CustomResponse<GameResponseModel>) => {
 
     try {
-        const { id } = req.query
-        const getGame = await prisma.game.findFirst({ where: { id: id as string }, include: { player: true } })
-        res.json(getGame)
+        const { id } = req.body
+        const game = await prisma.game.findFirst({ where: { id: id as string }, include: { player: true } })
+
+        if (game && game.status) {
+            res.json({ data: { game: game }, success: true }).status(200)
+        } else {
+            res.json({ data: { game: null }, success: true }).status(200)
+
+        }
 
     } catch (error) {
         throw new Error()
+    }
+
+})
+
+app.post("/finish", async (req, res) => {
+    try {
+        const { gameId } = req.body
+
+        if (gameId) {
+            const game = await prisma.game.update({ where: { id: gameId }, data: { status: false } })
+            res.json({ Data: null, Success: true, GameStatus: false }).status(200)
+
+        }
+    } catch (error) {
+
     }
 
 })
