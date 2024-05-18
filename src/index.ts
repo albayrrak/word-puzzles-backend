@@ -90,6 +90,9 @@ app.post('/start', async (req, res: CustomResponse<{ gameId: string }>) => {
 
             return res.json({ data: { game: { gameId: startGame.id } }, success: true }).status(200)
 
+        } else {
+            return res.json({ data: { game: null }, success: false }).status(200)
+
         }
 
     } catch (error) {
@@ -174,9 +177,19 @@ app.post("/finish", async (req, res) => {
 
 })
 
-app.get("/rank", async (req, res) => {
-    const rank = await prisma.game.findMany({ orderBy: { score: "desc" }, take: 2 })
-    res.json(rank)
+app.post("/rank", async (req, res: CustomResponse<GameResponseModel[]>) => {
+    try {
+        const { count } = req.body
+        const rank = await prisma.game.findMany({ orderBy: { score: "desc" }, take: count, include: { player: true } })
+        if (rank) {
+            res.json({ data: { game: rank, gameStatus: false, wordStatus: false }, success: true, }).status(200)
+        } else {
+            res.json({ data: null, success: false }).status(200)
+        }
+
+    } catch (error) {
+        res.json().status(500)
+    }
 
 
 })
