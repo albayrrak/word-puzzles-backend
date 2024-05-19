@@ -1,17 +1,9 @@
-import express from "express";
-import cors from "cors";
-import { PrismaClient } from '@prisma/client'
-import { shuffle } from "./helpers/global";
+import { Request } from "express";
 import { CustomResponse } from "models/responseModel";
+import { PrismaClient } from '@prisma/client'
+import { shuffle } from "helpers/global";
 import { GameResponseModel } from "models/global";
-
 const prisma = new PrismaClient()
-
-const app = express()
-
-// Middleware
-app.use(express.json())
-app.use(cors())
 
 
 const words = [
@@ -60,7 +52,8 @@ const words = [
 ]
 
 
-app.post('/start', async (req, res: CustomResponse<{ gameId: string }>) => {
+export const startGame = async (req: Request, res: CustomResponse<{ gameId: string }>) => {
+
     try {
         const { username } = req.body
 
@@ -99,13 +92,11 @@ app.post('/start', async (req, res: CustomResponse<{ gameId: string }>) => {
         console.error('Error creating game:', error);
         res.status(500);
     }
-});
+}
 
-app.post("/verify", async (req, res: CustomResponse<null>) => {
+export const verifyWord = async (req: Request, res: CustomResponse<null>) => {
     try {
         const { word, gameId } = req.body
-        console.log(word.split("").length);
-
 
         const isVerifyWord = await prisma.game.findFirst({ where: { id: gameId, word: word } })
 
@@ -120,12 +111,10 @@ app.post("/verify", async (req, res: CustomResponse<null>) => {
             const isVerifyWordIndex = randomWord.findIndex((x) => x.word === isVerifyWord.word)
 
             let randomRecord = randomWord.length - 1 === isVerifyWordIndex ? randomWord[0] : randomWord[isVerifyWordIndex + 1];
-            console.log(randomRecord.word);
-
 
             const shuffleWord = shuffle(randomRecord.word)
 
-            const score = (isVerifyWord.word.split("").length * 10) + isVerifyWord.score
+            const score = isVerifyWord.score + randomRecord.word.split("").length * 10
 
             const level = isVerifyWord.level + 1
 
@@ -145,10 +134,9 @@ app.post("/verify", async (req, res: CustomResponse<null>) => {
     } catch (error) {
         res.status(500)
     }
-})
+}
 
-app.post("/game", async (req, res: CustomResponse<GameResponseModel>) => {
-
+export const getGame = async (req: Request, res: CustomResponse<GameResponseModel>) => {
     try {
         const { id } = req.body
         const game = await prisma.game.findFirst({ where: { id: id as string }, include: { player: true } })
@@ -164,9 +152,9 @@ app.post("/game", async (req, res: CustomResponse<GameResponseModel>) => {
         throw new Error()
     }
 
-})
+}
 
-app.post("/finish", async (req, res: CustomResponse<GameResponseModel>) => {
+export const finishGame = async (req: Request, res: CustomResponse<GameResponseModel>) => {
     try {
         const { gameId } = req.body
 
@@ -182,10 +170,9 @@ app.post("/finish", async (req, res: CustomResponse<GameResponseModel>) => {
         res.json({ data: { game: null, wordStatus: false, gameStatus: false }, success: false }).status(500)
 
     }
+}
 
-})
-
-app.post("/rank", async (req, res: CustomResponse<GameResponseModel[]>) => {
+export const getTopRank = async (req: Request, res: CustomResponse<GameResponseModel[]>) => {
     try {
         const { count } = req.body
         const rank = await prisma.game.findMany({ orderBy: { score: "desc" }, take: count, include: { player: true } })
@@ -198,33 +185,13 @@ app.post("/rank", async (req, res: CustomResponse<GameResponseModel[]>) => {
     } catch (error) {
         res.json().status(500)
     }
+}
 
-
-})
-
-app.post("/add-word", async (req, res) => {
+export const addWord = async (req: Request, res: Response) => {
     const addWord = await prisma.word.createMany({
         data: words
     })
 
-    return res.json(addWord)
+    console.log(addWord);
 
-})
-
-
-const start = async () => {
-    try {
-        await prisma.$connect()
-
-        app.listen("5000", () => {
-            console.log("server is running");
-        })
-    } catch (error) {
-        await prisma.$disconnect()
-
-        console.log(error);
-
-    }
 }
-
-start()
