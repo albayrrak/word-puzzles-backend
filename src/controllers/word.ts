@@ -1,64 +1,17 @@
 import { Request } from "express";
-import { CustomResponse } from "models/responseModel";
+import { CustomResponse } from "../models/responseModel";
 import { PrismaClient } from '@prisma/client'
-import { shuffle } from "helpers/global";
-import { GameResponseModel } from "models/global";
+import { shuffle } from "../helpers/global";
+import { GameResponseModel } from "../models/global";
+
 const prisma = new PrismaClient()
 
-
-const words = [
-    {
-        word: "Masal"
-    },
-    {
-        word: "Kale"
-    },
-    {
-        word: "Yaprak"
-    },
-    {
-        word: "Gökyüzü"
-    },
-    {
-        word: "Mürekkep"
-    },
-    {
-        word: "Serçe"
-    },
-    {
-        word: "Deniz"
-    },
-    {
-        word: "Gülümseme"
-    },
-    {
-        word: "İstasyon"
-    },
-    {
-        word: "Akvaryum"
-    },
-    {
-        word: "Rüzgar"
-    },
-    {
-        word: "Çekiç"
-    },
-    {
-        word: "Parmak"
-    },
-    {
-        word: "Buzul"
-    },
-]
-
-
 export const startGame = async (req: Request, res: CustomResponse<{ gameId: string }>) => {
-
     try {
-        const { username } = req.body
+        const { username, lang } = req.body
 
         if (username) {
-            const randomWord = await prisma.word.findMany()
+            const randomWord = await prisma.word.findMany({ where: { lang: lang } })
 
             const randomIndex = Math.floor(Math.random() * randomWord.length);
 
@@ -85,7 +38,6 @@ export const startGame = async (req: Request, res: CustomResponse<{ gameId: stri
 
         } else {
             return res.json({ data: { game: null }, success: false }).status(200)
-
         }
 
     } catch (error) {
@@ -96,7 +48,8 @@ export const startGame = async (req: Request, res: CustomResponse<{ gameId: stri
 
 export const verifyWord = async (req: Request, res: CustomResponse<null>) => {
     try {
-        const { word, gameId } = req.body
+        const { word, gameId, lang } = req.body
+
 
         const isVerifyWord = await prisma.game.findFirst({ where: { id: gameId, word: word } })
 
@@ -106,15 +59,17 @@ export const verifyWord = async (req: Request, res: CustomResponse<null>) => {
         }
 
         if (isVerifyWord && isVerifyWord.status) {
-            const randomWord = await prisma.word.findMany()
+            const randomWord = await prisma.word.findMany({ where: { lang: lang } })
 
             const isVerifyWordIndex = randomWord.findIndex((x) => x.word === isVerifyWord.word)
 
             let randomRecord = randomWord.length - 1 === isVerifyWordIndex ? randomWord[0] : randomWord[isVerifyWordIndex + 1];
+            console.log(randomRecord.word);
+
 
             const shuffleWord = shuffle(randomRecord.word)
 
-            const score = isVerifyWord.score + randomRecord.word.split("").length * 10
+            const score = (isVerifyWord.word.split("").length * 10) + isVerifyWord.score
 
             const level = isVerifyWord.level + 1
 
@@ -187,11 +142,3 @@ export const getTopRank = async (req: Request, res: CustomResponse<GameResponseM
     }
 }
 
-export const addWord = async (req: Request, res: Response) => {
-    const addWord = await prisma.word.createMany({
-        data: words
-    })
-
-    console.log(addWord);
-
-}
