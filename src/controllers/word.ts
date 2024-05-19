@@ -61,7 +61,7 @@ export const verifyWord = async (req: Request, res: CustomResponse<null>) => {
         if (isVerifyWord && isVerifyWord.status) {
             const randomWord = await prisma.word.findMany({ where: { lang: lang } })
 
-            const isVerifyWordIndex = randomWord.findIndex((x) => x.word === isVerifyWord.word)
+            const isVerifyWordIndex = randomWord.findIndex((x: { id: string, word: string, lang: string }) => x.word === isVerifyWord.word)
 
             let randomRecord = randomWord.length - 1 === isVerifyWordIndex ? randomWord[0] : randomWord[isVerifyWordIndex + 1];
             console.log(randomRecord.word);
