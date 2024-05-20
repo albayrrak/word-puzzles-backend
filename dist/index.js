@@ -90,6 +90,9 @@ app.post("/add-word", async (req, res) => {
         data: wordsLowerCase
     });
 });
+app.get("/", async (req, res) => {
+    res.send("test");
+});
 const start = async () => {
     try {
         await prisma.$connect();
