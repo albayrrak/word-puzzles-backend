@@ -6,8 +6,15 @@
   "scripts": {
     "start": "nodemon index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && npx prisma generate --schema=src/prisma/schema.prisma"
+    "build": " rimraf dist && tsc && npx prisma generate --schema=src/prisma/schema.prisma",
+    "ts.check": "tsc --project tsconfig.json",
+    "add-build": "git add dist"
   },
+    "pre-commit": [
+      "ts.check",
+      "build",
+      "add-build"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,6 +29,8 @@
     "@prisma/client": "^5.13.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "prisma": "^5.13.0"
+    "pre-commit": "^1.2.2",
+    "prisma": "^5.13.0",
+    "rimraf": "^5.0.7"
   }
 }
