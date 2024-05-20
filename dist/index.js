@@ -12,6 +12,7 @@ const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
+const port = process.env.PORT || 8080;
 const words = [
     {
         word: "Masal"
@@ -92,7 +93,7 @@ app.post("/add-word", async (req, res) => {
 const start = async () => {
     try {
         await prisma.$connect();
-        app.listen("5000", () => {
+        app.listen(port, () => {
             console.log("server is running");
         });
     }
