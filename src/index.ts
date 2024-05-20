@@ -1,9 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from '@prisma/client'
-import { shuffle } from "./helpers/global";
-import { CustomResponse } from "models/responseModel";
-import { GameResponseModel } from "models/global";
 import { finishGame, getGame, getTopRank, startGame, verifyWord } from "./controllers/word";
 
 const prisma = new PrismaClient()

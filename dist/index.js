@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -78,7 +87,7 @@ app.post("/verify", word_1.verifyWord);
 app.post("/game", word_1.getGame);
 app.post("/finish", word_1.finishGame);
 app.post("/rank", word_1.getTopRank);
-app.post("/add-word", async (req, res) => {
+app.post("/add-word", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const wordsLowerCase = wordsEn.map((x) => {
         let test = x.word.toLowerCase();
         return {
@@ -86,24 +95,24 @@ app.post("/add-word", async (req, res) => {
             lang: "en"
         };
     });
-    const addWord = await prisma.word.createMany({
+    const addWord = yield prisma.word.createMany({
         data: wordsLowerCase
     });
-});
-app.get("/", async (req, res) => {
+}));
+app.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("test");
-});
-const start = async () => {
+}));
+const start = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        await prisma.$connect();
+        yield prisma.$connect();
         app.listen(port, () => {
             console.log("server is running");
         });
     }
     catch (error) {
-        await prisma.$disconnect();
+        yield prisma.$disconnect();
         console.log(error);
     }
-};
+});
 start();
 //# sourceMappingURL=index.js.map
